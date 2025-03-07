@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_breaking/app_router.dart';
 
 void main() {
-  runApp(BreakingBadApp(appRouter: AppRouter()));
+  runApp(RickAndMorty(appRouter: AppRouter()));
 }
 
-class BreakingBadApp extends StatelessWidget {
+class RickAndMorty extends StatelessWidget {
   final AppRouter appRouter;
 
-  const BreakingBadApp({super.key, required this.appRouter});
+  const RickAndMorty({super.key, required this.appRouter});
 
   @override
   Widget build(BuildContext context) {
