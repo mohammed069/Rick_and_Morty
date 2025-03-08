@@ -19,10 +19,10 @@ class Character {
     charSpecies = json['species'];
     charType = json['type'];
     charGender = json['gender'];
-    charOrigin = json['origin'];
-    charLocation = json['location'];
+    charOrigin = Map<String, dynamic>.from(json['origin']);
+    charLocation = Map<String, dynamic>.from(json['location']);
     charImage = json['image'];
-    charEpisode = json['episode'];
+    charEpisode = List<String>.from(json['episode']);
     charUrl = json['url'];
     charCreated = json['created'];
   }

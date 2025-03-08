@@ -21,8 +21,7 @@ class CharactersWebServices {
       Response response = await dio.get('/character');
       characters = response.data['results'];
     } catch (e) {
-      // ignore: avoid_print
-      print(e.toString());
+      throw Exception('Failed to load characters');
     }
     return characters;
   }

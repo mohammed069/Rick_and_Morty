@@ -11,10 +11,16 @@ class CharactersCubit extends Cubit<CharactersState> {
   CharactersCubit(this.charactersRepository) : super(CharactersInitial());
 
   List<dynamic> getAllCharacters() {
-    charactersRepository.getAllCharacters().then((characters) {
-      emit(CharactersLoaded(characters: characters));
-      this.characters = characters;
-    });
+    emit(CharactersLoading());
+    charactersRepository
+        .getAllCharacters()
+        .then((characters) {
+          emit(CharactersLoaded(characters: characters));
+          this.characters = characters;
+        })
+        .catchError((error) {
+          emit(CharactersError(message: error.toString()));
+        });
     return characters;
   }
 }
