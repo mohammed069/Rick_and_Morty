@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_breaking/business_logic/cubit/characters_cubit.dart';
 import 'package:flutter_breaking/constants/my_colors.dart';
 import 'package:flutter_breaking/presentation/widgets/character_item.dart';
+import 'package:flutter_offline/flutter_offline.dart';
+import 'package:lottie/lottie.dart';
 
 class CharactersScreen extends StatefulWidget {
   const CharactersScreen({super.key});
@@ -13,12 +15,82 @@ class CharactersScreen extends StatefulWidget {
 
 class _CharactersScreenState extends State<CharactersScreen> {
   late List<dynamic> allCharacters;
+  late List<dynamic> searchedCharacters;
+  bool _isSearching = false;
+  final TextEditingController _searchController = TextEditingController();
+
+  Widget _buildSearchField() {
+    return TextField(
+      controller: _searchController,
+      cursorColor: MyColors.myGrey,
+      decoration: InputDecoration(
+        hintText: 'Find a character...',
+        hintStyle: const TextStyle(color: MyColors.myGrey, fontSize: 20),
+        border: InputBorder.none,
+      ),
+      style: const TextStyle(color: MyColors.myGrey, fontSize: 15),
+      onChanged: (value) {
+        setState(() {
+          searchedCharacters =
+              allCharacters
+                  .where(
+                    (character) => character.charName.toLowerCase().contains(
+                      value.toLowerCase(),
+                    ),
+                  )
+                  .toList();
+        });
+      },
+    );
+  }
+
+  List<Widget> _buildAppBarActions() {
+    if (_isSearching) {
+      return [
+        IconButton(
+          icon: const Icon(Icons.clear, color: MyColors.myGrey),
+          onPressed: () {
+            _clearSearch();
+            Navigator.pop(context);
+            setState(() {
+              _isSearching = false;
+            });
+          },
+        ),
+      ];
+    } else {
+      return [IconButton(icon: Icon(Icons.search), onPressed: _startSearch)];
+    }
+  }
+
+  void _startSearch() {
+    ModalRoute.of(
+      context,
+    )!.addLocalHistoryEntry(LocalHistoryEntry(onRemove: _stopSearching));
+    setState(() {
+      _isSearching = true;
+    });
+  }
+
+  void _stopSearching() {
+    _clearSearch();
+
+    setState(() {
+      _isSearching = false;
+    });
+  }
+
+  void _clearSearch() {
+    setState(() {
+      _searchController.clear();
+      searchedCharacters = [];
+    });
+  }
 
   @override
   void initState() {
     super.initState();
-    allCharacters =
-        BlocProvider.of<CharactersCubit>(context).getAllCharacters();
+    BlocProvider.of<CharactersCubit>(context).getAllCharacters();
   }
 
   Widget buildBlocWidget() {
@@ -26,6 +98,7 @@ class _CharactersScreenState extends State<CharactersScreen> {
       builder: (context, state) {
         if (state is CharactersLoaded) {
           allCharacters = state.characters;
+          // searchedCharacters = [];
           return buildLoadedListWidget();
         } else if (state is CharactersError) {
           return showErrorMessage(state.message);
@@ -33,6 +106,15 @@ class _CharactersScreenState extends State<CharactersScreen> {
           return showLoadingIndicator();
         }
       },
+    );
+  }
+
+  Widget _buildNoInternet() {
+    return Center(
+      child: Lottie.asset(
+        'assets/images/no_internet_animation.json',
+        fit: BoxFit.contain,
+      ),
     );
   }
 
@@ -68,11 +150,23 @@ class _CharactersScreenState extends State<CharactersScreen> {
       shrinkWrap: true,
       physics: const ClampingScrollPhysics(),
       padding: const EdgeInsets.all(0),
-      itemCount: allCharacters.length,
+      itemCount:
+          _searchController.text.isEmpty
+              ? allCharacters.length
+              : searchedCharacters.length,
       itemBuilder: (context, index) {
-        return CharacterItem(character: allCharacters[index]);
+        return CharacterItem(
+          character:
+              _searchController.text.isEmpty
+                  ? allCharacters[index]
+                  : searchedCharacters[index],
+        );
       },
     );
+  }
+
+  Widget _buildAppBarTitle() {
+    return Text('Characters', style: TextStyle(color: MyColors.myGrey));
   }
 
   @override
@@ -80,12 +174,21 @@ class _CharactersScreenState extends State<CharactersScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: MyColors.myYellow,
-        title: const Text(
-          'Characters',
-          style: TextStyle(color: MyColors.myGrey),
-        ),
+        title: _isSearching ? _buildSearchField() : _buildAppBarTitle(),
+        actions: _buildAppBarActions(),
       ),
-      body: buildBlocWidget(),
+      body: OfflineBuilder(
+        connectivityBuilder: (
+          BuildContext context,
+          List<ConnectivityResult> connectivity,
+          Widget child,
+        ) {
+          final bool connected =
+              !connectivity.contains(ConnectivityResult.none);
+          return connected ? buildBlocWidget() : _buildNoInternet();
+        },
+        child: buildBlocWidget(),
+      ),
     );
   }
 }
