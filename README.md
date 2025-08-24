@@ -9,6 +9,6 @@ This project is an application with flutter with api and MVVM.
 A few resources to get you started if this is your first Flutter project:
 
 - [Documentation of the api](https://rickandmortyapi.com/documentation/)
-- [baseURL:](https://docs.flutter.dev/cookbook)
+
 
 
